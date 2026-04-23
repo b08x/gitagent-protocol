@@ -371,7 +371,7 @@ Adapters are used by both `export` and `run`. Available adapters:
 | `codex` | OpenAI Codex configuration |
 | `kiro` | Kiro adapter format |
 | `gitclaw` | GitClaw agent format |
-| `mistral-vibe` | Mistral Vibe (config.toml + prompts) |
+| `mistral-vibe` | Mistral Vibe (config.toml + prompts + skills) |
 
 ```bash
 # Export to system prompt

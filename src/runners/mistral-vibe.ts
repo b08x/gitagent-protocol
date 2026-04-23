@@ -25,7 +25,7 @@ export function runWithMistralVibe(agentDir: string, manifest: AgentManifest, op
       const fullPath = join(tmpRoot, relPath);
       const dir = join(fullPath, '..');
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-      writeFileSync(fullPath, content, 'utf-8');
+      writeFileSync(fullPath, content);
     }
 
     const agentName = manifest.name.toLowerCase().replace(/\s+/g, '-');

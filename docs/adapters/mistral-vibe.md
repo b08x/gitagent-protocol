@@ -36,6 +36,7 @@ vibe --version
 | `manifest.model.preferred` | `agents/<agent>.toml` → `active_model` | Preferred model ID |
 | `manifest.compliance.supervision.human_in_the_loop` | `agents/<agent>.toml` → `tools.*.permission` | `none` maps to `always`, others to `ask` |
 | `skills/*/SKILL.md` | `skills/<skill>/SKILL.md` | Direct mapping with reconstructed frontmatter |
+| `skills/*/{scripts,references,assets}/*` | `skills/<skill>/{subfolder}/*` | Recursive asset collection (supports binary files) |
 | `agents/` (sub-agents) | `agents/<subagent>.toml` + `prompts/<subagent>.md` | Full multi-agent support |
 
 ## Tool Permission Mapping
@@ -108,6 +109,8 @@ gitagent run ./my-agent --adapter mistral-vibe -p "Refactor this module"
 - Main agent instructions (SOUL/RULES/DUTIES)
 - Sub-agent delegation (multi-TOML export)
 - Skill portability (SKILL.md reconstruction)
+- Skill assets (recursive collection of `scripts/`, `references/`, and `assets/`)
+- Binary file support (exported as bit-for-bit copies)
 - Model preferences
 - Basic tool permissions (always/ask)
 
@@ -125,8 +128,10 @@ gitagent run ./my-agent --adapter mistral-vibe -p "Refactor this module"
 
 **Workaround:** Manually add `[[mcp_servers]]` blocks to the exported TOML if required.
 
-### 3. Skill Assets/Scripts
-**Issue:** Currently, only the `SKILL.md` is exported. Supporting files in `scripts/` or `references/` are not yet moved.
+### 3. Binary Files in Text Export
+**Issue:** When using `gitagent export` to stdout or a text file, binary files (images, binaries) are omitted and replaced with a placeholder (e.g., `[Binary file omitted from text export: 1024 bytes]`) to prevent terminal corruption.
+
+**Workaround:** Use `gitagent run` to see the full agent in action, or check the source repository for the binary assets.
 
 ## Resources
 

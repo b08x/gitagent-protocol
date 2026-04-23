@@ -454,7 +454,7 @@ gitagent export [options]
 | `codex` | JSON + Markdown | OpenAI Codex configuration |
 | `kiro` | JSON | Kiro adapter format |
 | `gitclaw` | YAML | GitClaw agent format |
-| `mistral-vibe` | TOML + Markdown | Mistral Vibe (config.toml + prompts) |
+| `mistral-vibe` | TOML + Markdown | Mistral Vibe (config.toml + prompts + skills) |
 
 ```bash
 # Print system prompt to terminal
@@ -916,6 +916,7 @@ Mistral Vibe (CLI) format. Returns a multi-file workspace structure:
 - `agents/<name>.toml` (model config, tool permissions)
 - `prompts/<name>.md` (consolidated system prompt)
 - `skills/<name>/SKILL.md` (reconstructed skill definitions)
+- `skills/<name>/{scripts,references,assets}/` (recursive asset collection)
 
 ---
 

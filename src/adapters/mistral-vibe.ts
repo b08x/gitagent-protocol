@@ -17,13 +17,13 @@ import { buildComplianceSection } from './shared.js';
  *     SKILL.md
  */
 export interface MistralVibeExport {
-  files: Record<string, string>;
+  files: Record<string, string | Buffer>;
 }
 
 export function exportToMistralVibe(dir: string): MistralVibeExport {
   const agentDir = resolve(dir);
   const manifest = loadAgentManifest(agentDir);
-  const files: Record<string, string> = {};
+  const files: Record<string, string | Buffer> = {};
 
   const agentName = manifest.name.toLowerCase().replace(/\s+/g, '-');
   
@@ -67,12 +67,43 @@ export function exportToMistralVibe(dir: string): MistralVibeExport {
       const raw = `---\n${yaml.dump(skill.frontmatter)}---\n\n${skill.instructions}`;
       files[`skills/${skillName}/SKILL.md`] = raw;
       
-      // Mistral Vibe might expect scripts/ and references/ subfolders
-      // For now we just create the SKILL.md
+      // Collect additional assets (scripts, references, assets)
+      const assetDirs = ['scripts', 'references', 'assets'];
+      for (const sub of assetDirs) {
+        const fullSubDir = join(skill.directory, sub);
+        if (existsSync(fullSubDir)) {
+          collectFilesRecursive(fullSubDir, join('skills', skillName, sub), files);
+        }
+      }
     }
   }
 
   return { files };
+}
+
+/**
+ * Recursively collect files from a directory and add them to the files map.
+ */
+function collectFilesRecursive(
+  dir: string,
+  prefix: string,
+  files: Record<string, string | Buffer>
+): void {
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = join(dir, entry.name);
+    const relPath = join(prefix, entry.name);
+    if (entry.isDirectory()) {
+      collectFilesRecursive(fullPath, relPath, files);
+    } else if (entry.isFile()) {
+      try {
+        // Read as Buffer to support binary files
+        files[relPath] = readFileSync(fullPath);
+      } catch (e) {
+        // Skip files that cannot be read
+      }
+    }
+  }
 }
 
 export function exportToMistralVibeString(dir: string): string {
@@ -81,11 +112,30 @@ export function exportToMistralVibeString(dir: string): string {
 
   for (const [path, content] of Object.entries(exp.files)) {
     parts.push(`# === ${path} ===`);
-    parts.push(content);
+    if (Buffer.isBuffer(content)) {
+      if (isBinary(content)) {
+        parts.push(`[Binary file omitted from text export: ${content.length} bytes]`);
+      } else {
+        parts.push(content.toString('utf-8'));
+      }
+    } else {
+      parts.push(content);
+    }
     parts.push('');
   }
 
   return parts.join('\n').trimEnd() + '\n';
+}
+
+/**
+ * Heuristic to check if a buffer contains binary data.
+ */
+function isBinary(buffer: Buffer): boolean {
+  // Check for null bytes in the first 512 bytes
+  for (let i = 0; i < Math.min(buffer.length, 512); i++) {
+    if (buffer[i] === 0) return true;
+  }
+  return false;
 }
 
 function buildInstructions(
