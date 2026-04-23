@@ -43,6 +43,7 @@ export function exportToMistralVibe(dir: string): MistralVibeExport {
       
       const subToml: Record<string, any> = {
         active_model: manifest.model?.preferred || 'mistral-large-latest',
+        agent_type: 'subagent',
         system_prompt_id: slug,
         disabled_tools: []
       };
@@ -181,6 +182,10 @@ function buildConfig(
     autocopy_to_clipboard: true,
     enable_telemetry: false,
   };
+
+  if (manifest.metadata?.agent_type === 'subagent') {
+    config.agent_type = 'subagent';
+  }
 
   // Tools mapping
   const allowedTools = collectAllowedTools(agentDir);

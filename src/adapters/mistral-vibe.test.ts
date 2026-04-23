@@ -22,6 +22,8 @@ function makeAgentDir(opts: {
   rules?: string;
   model?: string;
   compliance?: any;
+  metadata?: any;
+  agents?: Record<string, any>;
   skills?: Array<{ name: string; description: string; instructions: string; tools?: string[] }>;
 }): string {
   const dir = mkdtempSync(join(tmpdir(), 'gitagent-vibe-test-'));
@@ -34,9 +36,17 @@ function makeAgentDir(opts: {
     ? `compliance:\n  supervision:\n    human_in_the_loop: ${opts.compliance.human_in_the_loop}\n`
     : '';
 
+  const metadataBlock = opts.metadata
+    ? `metadata:\n${Object.entries(opts.metadata).map(([k, v]) => `  ${k}: ${v}`).join('\n')}\n`
+    : '';
+
+  const agentsBlock = opts.agents
+    ? `agents:\n${Object.entries(opts.agents).map(([k, v]) => `  ${k}:\n    description: ${v.description}`).join('\n')}\n`
+    : '';
+
   writeFileSync(
     join(dir, 'agent.yaml'),
-    `spec_version: '0.1.0'\nname: ${opts.name ?? 'test-agent'}\nversion: '0.1.0'\ndescription: '${opts.description ?? 'A test agent'}'\n${modelBlock}${complianceBlock}`,
+    `spec_version: '0.1.0'\nname: ${opts.name ?? 'test-agent'}\nversion: '0.1.0'\ndescription: '${opts.description ?? 'A test agent'}'\n${modelBlock}${complianceBlock}${metadataBlock}${agentsBlock}`,
     'utf-8',
   );
 
@@ -85,6 +95,27 @@ describe('exportToMistralVibe', () => {
     assert.match(toml, /active_model = "mistral-large-latest"/);
     assert.match(toml, /system_prompt_id = "test-agent"/);
     assert.match(toml, /autocopy_to_clipboard = true/);
+  });
+
+  test('main agent TOML includes agent_type = "subagent" if marked in metadata', () => {
+    const dir = makeAgentDir({ metadata: { agent_type: 'subagent' } });
+    const result = exportToMistralVibe(dir);
+    const toml = result.files['agents/test-agent.toml'] as string;
+    
+    assert.match(toml, /agent_type = "subagent"/);
+  });
+
+  test('sub-agents TOML always includes agent_type = "subagent"', () => {
+    const dir = makeAgentDir({ 
+      agents: { 'fact-checker': { description: 'Verifies facts' } } 
+    });
+    // Create sub-agent directory so loader doesn't fail if it checks for it
+    mkdirSync(join(dir, 'agents', 'fact-checker'), { recursive: true });
+    
+    const result = exportToMistralVibe(dir);
+    const toml = result.files['agents/fact-checker.toml'] as string;
+    
+    assert.match(toml, /agent_type = "subagent"/);
   });
 
   test('system prompt includes SOUL and RULES', () => {
