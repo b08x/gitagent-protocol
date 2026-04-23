@@ -1,0 +1,111 @@
+spec_version: "0.1.0"
+name: mistral-vibe-specialist
+version: 1.0.0
+description: >
+  Advanced multi-agent coding specialist for Mistral Vibe. 
+  Coordinates between an Architect for design and a QA Engineer for validation 
+  to produce production-grade, well-tested code.
+
+model:
+  preferred: mistral-large-latest
+  fallback:
+    - mistral-small-latest
+  constraints:
+    temperature: 0.2
+    max_tokens: 8192
+
+agents:
+  architect:
+    description: Designs system architecture and selects design patterns
+    delegation:
+      mode: explicit
+      triggers:
+        - architecture_needed
+        - pattern_selection
+  qa-engineer:
+    description: Reviews code for bugs, security issues, and test coverage
+    delegation:
+      mode: explicit
+      triggers:
+        - code_review_requested
+        - test_plan_needed
+
+runtime:
+  max_turns: 40
+  timeout: 300
+
+metadata:
+  vibe:
+    providers:
+      - name: mistral
+        api_base: https://api.mistral.ai/v1
+        backend: mistral
+    models:
+      - name: mistral-large-latest
+        provider: mistral
+        alias: production
+      - name: mistral-small-latest
+        provider: mistral
+        alias: fast
+    mcp_servers:
+      - name: fetch
+        transport: stdio
+        command: uvx
+        args: ["mcp-server-fetch"]
+    tools:
+      bash:
+        permission: always
+        allowlist: ["ls", "cat", "git status", "npm test", "npm run build", "npm install", "mkdir", "grep"]
+      read_file:
+        permission: always
+      write_file:
+        permission: ask
+
+compliance:
+  risk_tier: standard
+  supervision:
+    human_in_the_loop: always
+    escalation_triggers:
+      - confidence_below: 0.8
+      - error_detected: true
+  recordkeeping:
+    audit_logging: true
+    log_format: structured_json
+    retention_period: 30d
+  segregation_of_duties:
+    roles:
+      - id: orchestrator
+        description: Coordinates the coding lifecycle and delegates tasks
+        permissions:
+          - review
+          - approve
+          - submit
+      - id: architect
+        description: Responsible for high-level design and structural decisions
+        permissions:
+          - create
+          - submit
+      - id: qa
+        description: Responsible for verification and validation
+        permissions:
+          - execute
+          - review
+          - report
+    conflicts:
+      - [orchestrator, qa]
+      - [architect, qa]
+    assignments:
+      mistral-vibe-specialist: [orchestrator]
+      architect: [architect]
+      qa-engineer: [qa]
+    handoffs:
+      - action: deploy_code
+        required_roles: [orchestrator, qa]
+        approval_required: true
+    enforcement: strict
+
+tags:
+  - coding
+  - mistral-vibe
+  - multi-agent
+  - devops
