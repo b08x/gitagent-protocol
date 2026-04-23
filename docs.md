@@ -1056,6 +1056,8 @@ gitagent run -d ./my-agent -a github -p "Review this code"
 
 Adapter: `mistral-vibe`
 
+> **Note:** For a detailed guide on setting up a Mistral Vibe repository, see [docs/walkthrough-mistral-vibe.md](docs/walkthrough-mistral-vibe.md).
+
 1. Exports agent to a multi-file Mistral Vibe workspace in a temporary directory.
 2. Generates a root `config.toml` from `metadata.vibe` (for `providers`, `models`, and `mcp_servers`).
 3. Maps `human_in_the_loop=none` to `permission=always` for tools, others to `ask`.
