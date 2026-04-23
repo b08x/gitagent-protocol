@@ -1,0 +1,8 @@
+spec_version: 0.1.0
+name: skills
+version: 0.1.0
+description: 'Imported from Claude Code project: skills'
+model:
+  preferred: claude-sonnet-4-5-20250929
+skills: []
+tools: []
