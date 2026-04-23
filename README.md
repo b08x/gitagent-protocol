@@ -311,7 +311,7 @@ Both `gapman` and `gitagent` refer to the same binary — use whichever you pref
 | `gapman init [--template]` | Scaffold new agent (`minimal`, `standard`, `full`, `llm-wiki`) |
 | `gapman validate [--compliance]` | Validate against spec and regulatory requirements |
 | `gapman info` | Display agent summary |
-| `gapman export --format <fmt>` | Export to other formats (see adapters below) |
+| `gapman export --format <fmt>` | Export to other formats (claude-code, openai, crewai, openclaw, nanobot, lyzr, github, copilot, opencode, cursor, gemini, codex, kiro, gitclaw, mistral-vibe) |
 | `gapman import --from <fmt> <path>` | Import (`claude`, `cursor`, `crewai`, `opencode`) |
 | `gapman run <source> --adapter <a>` | Run an agent from a git repo or local directory |
 | `gapman install` | Resolve and install git-based dependencies |
@@ -367,6 +367,11 @@ Adapters are used by both `export` and `run`. Available adapters:
 | `openclaw` | OpenClaw format |
 | `nanobot` | Nanobot format |
 | `cursor` | Cursor `.cursor/rules/*.mdc` files |
+| `copilot` | GitHub Copilot instructions |
+| `codex` | OpenAI Codex configuration |
+| `kiro` | Kiro adapter format |
+| `gitclaw` | GitClaw agent format |
+| `mistral-vibe` | Mistral Vibe (config.toml + prompts) |
 
 ```bash
 # Export to system prompt
