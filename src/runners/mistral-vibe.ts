@@ -32,12 +32,10 @@ export function runWithMistralVibe(agentDir: string, manifest: AgentManifest, op
     const agentConfigPath = join(tmpRoot, 'agents', `${agentName}.toml`);
 
     // 2. Launch vibe
-    // Vibe typically looks in ~/.vibe, but we can try to point it to our temp structure
-    // or use the 'vibe' command with specific flags if supported.
-    // Based on docs, it might require files to be in specific places.
+    // Vibe uses the VIBE_HOME environment variable to point to our temp structure.
     // We'll use the 'vibe' command and assume it's in the PATH.
     
-    const args: string[] = ['agent', 'run', agentName];
+    const args: string[] = ['--agent', agentName];
     if (options.prompt) {
       args.push('--prompt', options.prompt);
     }
@@ -52,7 +50,7 @@ export function runWithMistralVibe(agentDir: string, manifest: AgentManifest, op
       cwd: agentDir,
       env: {
         ...process.env,
-        VIBE_HOME: tmpRoot // Hypothetical env var to point to temp config
+        VIBE_HOME: tmpRoot // Point to temp config
       }
     });
 

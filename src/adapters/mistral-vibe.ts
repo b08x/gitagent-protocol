@@ -26,6 +26,18 @@ export function exportToMistralVibe(dir: string): MistralVibeExport {
   const files: Record<string, string | Buffer> = {};
 
   const agentName = manifest.name.toLowerCase().replace(/\s+/g, '-');
+
+  const metadata = (manifest.metadata as any) || {};
+  const vibeConfig = metadata.vibe || {};
+
+  // 0. Root Config (config.toml)
+  if (vibeConfig.providers || vibeConfig.models || vibeConfig.mcp_servers) {
+    const rootConfig: Record<string, any> = {};
+    if (vibeConfig.providers) rootConfig.providers = vibeConfig.providers;
+    if (vibeConfig.models) rootConfig.models = vibeConfig.models;
+    if (vibeConfig.mcp_servers) rootConfig.mcp_servers = vibeConfig.mcp_servers;
+    files['config.toml'] = stringifyToToml(rootConfig);
+  }
   
   // 1. Main Agent TOML
   const mainConfig = buildConfig(agentDir, manifest, agentName);
@@ -183,13 +195,19 @@ function buildConfig(
     enable_telemetry: false,
   };
 
+  const metadata = (manifest.metadata as any) || {};
+  const vibeConfig = metadata.vibe || {};
+
+  if (vibeConfig.enabled_tools) config.enabled_tools = vibeConfig.enabled_tools;
+  if (vibeConfig.disabled_tools) config.disabled_tools = vibeConfig.disabled_tools;
+
   if (manifest.metadata?.agent_type === 'subagent') {
     config.agent_type = 'subagent';
   }
 
   // Tools mapping
   const allowedTools = collectAllowedTools(agentDir);
-  if (allowedTools.length > 0) {
+  if (allowedTools.length > 0 || vibeConfig.tools) {
     config.tools = {};
     for (const tool of allowedTools) {
       if (['bash', 'read_file', 'write_file', 'grep', 'ls'].includes(tool)) {
@@ -198,9 +216,28 @@ function buildConfig(
         };
       }
     }
+
+    if (vibeConfig.tools) {
+      config.tools = deepMerge(config.tools, vibeConfig.tools);
+    }
   }
 
   return config;
+}
+
+/**
+ * Simple deep merge utility.
+ */
+function deepMerge(target: any, source: any): any {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (source[key] instanceof Object && !Array.isArray(source[key]) && target[key]) {
+      result[key] = deepMerge(target[key], source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
 }
 
 function collectAllowedTools(agentDir: string): string[] {
@@ -221,10 +258,19 @@ function stringifyToToml(obj: any, currentPrefix = ''): string {
   let toml = '';
   const scalars: [string, any][] = [];
   const objects: [string, any][] = [];
+  const arrays: [string, any[]][] = [];
 
   for (const [key, value] of Object.entries(obj)) {
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      objects.push([key, value]);
+    if (value !== null && typeof value === 'object') {
+      if (Array.isArray(value)) {
+        if (value.length > 0 && typeof value[0] === 'object' && !Array.isArray(value[0])) {
+          arrays.push([key, value]);
+        } else {
+          scalars.push([key, value]);
+        }
+      } else {
+        objects.push([key, value]);
+      }
     } else {
       scalars.push([key, value]);
     }
@@ -237,6 +283,13 @@ function stringifyToToml(obj: any, currentPrefix = ''): string {
   for (const [key, value] of objects) {
     const sectionName = currentPrefix ? `${currentPrefix}.${key}` : key;
     toml += `\n[${sectionName}]\n${stringifyToToml(value, sectionName)}`;
+  }
+
+  for (const [key, value] of arrays) {
+    const sectionName = currentPrefix ? `${currentPrefix}.${key}` : key;
+    for (const item of value) {
+      toml += `\n[[${sectionName}]]\n${stringifyToToml(item, sectionName)}`;
+    }
   }
 
   return toml;
