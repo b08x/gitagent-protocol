@@ -33,8 +33,11 @@ vibe --version
 |----------|--------------|-------|
 | `SOUL.md` + `RULES.md` + `DUTIES.md` | `prompts/<agent>.md` | Consolidated system prompt |
 | `manifest.name` | `agents/<agent>.toml` → `system_prompt_id` | Slugified name used as prompt reference |
-| `manifest.model.preferred` | `agents/<agent>.toml` → `active_model` | Preferred model ID |
+| `manifest.metadata.vibe.providers` | `config.toml` → `[[providers]]` | Automated API provider configuration |
+| `manifest.metadata.vibe.models` | `config.toml` → `[[models]]` | Automated custom model definitions |
+| `manifest.metadata.vibe.mcp_servers` | `config.toml` → `[[mcp_servers]]` | Automated MCP server integration |
 | `manifest.compliance.supervision.human_in_the_loop` | `agents/<agent>.toml` → `tools.*.permission` | `none` maps to `always`, others to `ask` |
+| `manifest.metadata.vibe.tools` | `agents/<agent>.toml` → `tools.*` | Deep merged tool overrides (allowlist, patterns) |
 | `skills/*/SKILL.md` | `skills/<skill>/SKILL.md` | Direct mapping with reconstructed frontmatter |
 | `skills/*/{scripts,references,assets}/*` | `skills/<skill>/{subfolder}/*` | Recursive asset collection (supports binary files) |
 | `agents/` (sub-agents) | `agents/<subagent>.toml` + `prompts/<subagent>.md` | Full multi-agent support |
@@ -64,6 +67,15 @@ gitagent export --format mistral-vibe -d ./my-agent -o vibe-export.txt
 
 **Output Structure:**
 ```
+# === config.toml ===
+[[providers]]
+name = "mistral"
+...
+
+[[mcp_servers]]
+name = "fetch"
+...
+
 # === agents/my-agent.toml ===
 active_model = "mistral-large-latest"
 system_prompt_id = "my-agent"
@@ -71,20 +83,11 @@ autocopy_to_clipboard = true
 enable_telemetry = false
 
 [tools.bash]
-permission = "ask"
+permission = "always"
+allowlist = ["ls", "git status"]
 
 # === prompts/my-agent.md ===
-# my-agent
-Agent description
-[SOUL.md content]
-[RULES.md content]
-
-# === skills/my-skill/SKILL.md ===
----
-name: my-skill
 ...
----
-[Instructions]
 ```
 
 ### Run with Mistral Vibe
@@ -113,6 +116,8 @@ gitagent run ./my-agent --adapter mistral-vibe -p "Refactor this module"
 - Binary file support (exported as bit-for-bit copies)
 - Model preferences
 - Basic tool permissions (always/ask)
+- **New:** Automated `config.toml` generation for `providers`, `models`, and `mcp_servers` via `metadata.vibe`.
+- **New:** Deep-merged tool overrides (e.g. adding an `allowlist` to the default `bash` tool).
 
 ## What Requires Manual Setup
 
@@ -123,12 +128,7 @@ gitagent run ./my-agent --adapter mistral-vibe -p "Refactor this module"
 
 **Workaround:** Ensure your environment variables are set before running `gitagent run`.
 
-### 2. MCP Servers
-**Issue:** Mistral Vibe configuration for MCP servers is not yet mapped from `agent.yaml`.
-
-**Workaround:** Manually add `[[mcp_servers]]` blocks to the exported TOML if required.
-
-### 3. Binary Files in Text Export
+### 2. Binary Files in Text Export
 **Issue:** When using `gitagent export` to stdout or a text file, binary files (images, binaries) are omitted and replaced with a placeholder (e.g., `[Binary file omitted from text export: 1024 bytes]`) to prevent terminal corruption.
 
 **Workaround:** Use `gitagent run` to see the full agent in action, or check the source repository for the binary assets.

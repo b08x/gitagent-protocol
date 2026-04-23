@@ -1056,10 +1056,13 @@ gitagent run -d ./my-agent -a github -p "Review this code"
 
 Adapter: `mistral-vibe`
 
-1. Exports agent to a multi-file Mistral Vibe workspace in a temporary directory
-2. Maps `human_in_the_loop=none` to `permission=always` for tools, others to `ask`
-3. Launches the `vibe` CLI with a custom `VIBE_HOME` pointing to the workspace
-4. Cleans up temp workspace on exit
+1. Exports agent to a multi-file Mistral Vibe workspace in a temporary directory.
+2. Generates a root `config.toml` from `metadata.vibe` (for `providers`, `models`, and `mcp_servers`).
+3. Maps `human_in_the_loop=none` to `permission=always` for tools, others to `ask`.
+4. Merges custom tool overrides from `metadata.vibe.tools` (e.g. `allowlist`).
+5. Launches the `vibe` CLI with a custom `VIBE_HOME` pointing to the workspace using the `--agent` flag.
+6. Cleans up temp workspace on exit.
+
 
 **Requires:** [Mistral Vibe](https://github.com/mistralai/mistral-vibe) installed (`pip install mistral-vibe`), `MISTRAL_API_KEY` set.
 
