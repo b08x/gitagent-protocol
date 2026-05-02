@@ -1,0 +1,25 @@
+spec_version: "0.1.0"
+name: qa-engineer
+version: 1.0.0
+description: >
+  Responsible for code verification, security auditing, and test design.
+  Ensures that implementation meets the architectural specification and quality standards.
+
+skills:
+  - security-review
+
+model:
+  preferred: mistral-large-latest
+  constraints:
+    temperature: 0.1
+    max_tokens: 4096
+
+runtime:
+  max_turns: 15
+  timeout: 180
+
+tags:
+  - qa
+  - testing
+  - security
+  - review

@@ -4,7 +4,7 @@ A framework-agnostic, git-native standard for defining AI agents. `gapman` is th
 
 **Clone a repo, get an agent.**
 
-> The package was previously published as `@open-gitagent/gitagent`. Starting with v0.3.1 it is published as [`@open-gitagent/gapman`](https://www.npmjs.com/package/@open-gitagent/gapman). Both `gapman` and `gitagent` commands are installed as binaries — they point to the same CLI.
+> The package was previously published as `@open-gitagent/gitagent`. Starting with v0.3.2 it is published as [`@open-gitagent/gapman`](https://www.npmjs.com/package/@open-gitagent/gapman). Both `gapman` and `gitagent` commands are installed as binaries — they point to the same CLI.
 
 ---
 
@@ -35,6 +35,7 @@ A framework-agnostic, git-native standard for defining AI agents. `gapman` is th
   - [Nanobot](#nanobot-runner)
   - [Lyzr](#lyzr-runner)
   - [GitHub Models](#github-models-runner)
+  - [Mistral Vibe](#mistral-vibe-runner)
   - [Git (Auto-Detect)](#git-runner-auto-detect)
 - [Skills System](#skills-system)
 - [Compliance](#compliance)
@@ -56,7 +57,7 @@ npm install -g @open-gitagent/gapman
 Verify:
 
 ```bash
-gapman --version   # 0.3.1
+gapman --version   # 0.3.2
 gapman --help
 
 # gitagent alias also works
@@ -446,6 +447,14 @@ gitagent export [options]
 | `nanobot` | JSON + Markdown | Nanobot config.json + system prompt |
 | `lyzr` | JSON | Lyzr Studio API payload (agent creation) |
 | `github` | JSON | GitHub Models API chat completions payload |
+| `copilot` | Markdown | GitHub Copilot instructions |
+| `opencode` | JSON + Markdown | OpenCode instructions + config |
+| `cursor` | Markdown | Cursor `.cursor/rules/*.mdc` files |
+| `gemini` | JSON + Markdown | Google Gemini CLI (GEMINI.md + settings.json) |
+| `codex` | JSON + Markdown | OpenAI Codex configuration |
+| `kiro` | JSON | Kiro adapter format |
+| `gitclaw` | YAML | GitClaw agent format |
+| `mistral-vibe` | TOML + Markdown | Mistral Vibe (config.toml + prompts + skills) |
 
 ```bash
 # Print system prompt to terminal
@@ -868,6 +877,47 @@ GitHub Models API payload (OpenAI-compatible chat completions). Returns JSON wit
 | `gemini-*` | `google/` |
 | `deepseek-*`, `DeepSeek-*` | `deepseek/` |
 
+### copilot
+
+GitHub Copilot instructions format. Returns Markdown instructions including soul, rules, and skills for use in `.github/copilot-instructions.md`.
+
+### opencode
+
+OpenCode workspace format. Returns structured output with:
+- `config.json` (model mapping, workspace settings)
+- Instructions including soul, rules, and skills
+- Tool definitions as separate YAML files
+
+### cursor
+
+Cursor IDE rules format. Returns Markdown content for `.cursorrules` or `.cursor/rules/*.mdc` files, incorporating rules, soul, and tool permissions.
+
+### gemini
+
+Google Gemini CLI format. Returns:
+- `GEMINI.md` (soul, rules, skills, knowledge, compliance)
+- `.gemini/settings.json` (model config, allowed tools, approval modes, hooks)
+
+### codex
+
+OpenAI Codex configuration format. Returns structured configuration for Codex-based environments including system prompts and tool schemas.
+
+### kiro
+
+Kiro adapter format. Returns a JSON payload for the Kiro agent platform including identity, instructions, and capability mapping.
+
+### gitclaw
+
+GitClaw agent format. Returns a YAML definition for the GitClaw framework, mapping manifest fields and consolidated instructions.
+
+### mistral-vibe
+
+Mistral Vibe (CLI) format. Returns a multi-file workspace structure:
+- `agents/<name>.toml` (model config, tool permissions)
+- `prompts/<name>.md` (consolidated system prompt)
+- `skills/<name>/SKILL.md` (reconstructed skill definitions)
+- `skills/<name>/{scripts,references,assets}/` (recursive asset collection)
+
 ---
 
 ## Adapters & Runners
@@ -1001,6 +1051,22 @@ Adapter: `github`
 export GITHUB_TOKEN="ghp_..."
 gitagent run -d ./my-agent -a github -p "Review this code"
 ```
+
+### Mistral Vibe Runner
+
+Adapter: `mistral-vibe`
+
+> **Note:** For a detailed guide on setting up a Mistral Vibe repository, see [docs/walkthrough-mistral-vibe.md](docs/walkthrough-mistral-vibe.md).
+
+1. Exports agent to a multi-file Mistral Vibe workspace in a temporary directory.
+2. Generates a root `config.toml` from `metadata.vibe` (for `providers`, `models`, and `mcp_servers`).
+3. Maps `human_in_the_loop=none` to `permission=always` for tools, others to `ask`.
+4. Merges custom tool overrides from `metadata.vibe.tools` (e.g. `allowlist`).
+5. Launches the `vibe` CLI with a custom `VIBE_HOME` pointing to the workspace using the `--agent` flag.
+6. Cleans up temp workspace on exit.
+
+
+**Requires:** [Mistral Vibe](https://github.com/mistralai/mistral-vibe) installed (`pip install mistral-vibe`), `MISTRAL_API_KEY` set.
 
 ---
 
@@ -1391,7 +1457,8 @@ gitagent/
 │   │   ├── openclaw.ts             # OpenClaw workspace
 │   │   ├── nanobot.ts              # Nanobot config
 │   │   ├── lyzr.ts                 # Lyzr Studio API payload
-│   │   └── github.ts               # GitHub Models payload
+│   │   ├── github.ts               # GitHub Models payload
+│   │   └── mistral-vibe.ts         # Mistral Vibe (config.toml + prompts)
 │   ├── runners/
 │   │   ├── claude.ts               # Spawns Claude Code CLI
 │   │   ├── openai.ts               # Spawns Python with OpenAI SDK
@@ -1400,6 +1467,7 @@ gitagent/
 │   │   ├── nanobot.ts              # Spawns Nanobot CLI
 │   │   ├── lyzr.ts                 # Calls Lyzr REST API
 │   │   ├── github.ts               # Calls GitHub Models API
+│   │   ├── mistral-vibe.ts         # Spawns Mistral Vibe CLI
 │   │   └── git.ts                  # Clone + auto-detect + delegate
 │   └── utils/
 │       ├── loader.ts               # agent.yaml loading, AgentManifest type

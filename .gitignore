@@ -7,3 +7,8 @@ dist/
 site/
 site-v2/
 .claude/
+
+.gemini/
+**/graphify-out/*
+.graphifyignore
+GEMINI.md

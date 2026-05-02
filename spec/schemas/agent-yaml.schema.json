@@ -230,12 +230,14 @@
     },
     "metadata": {
       "type": "object",
-      "description": "Arbitrary key-value metadata. Values must be strings, numbers, or booleans.",
+      "description": "Arbitrary metadata. Supports nested objects and arrays.",
       "additionalProperties": {
         "oneOf": [
           { "type": "string" },
           { "type": "number" },
-          { "type": "boolean" }
+          { "type": "boolean" },
+          { "type": "array", "items": { "$ref": "#/properties/metadata/additionalProperties" } },
+          { "type": "object", "additionalProperties": { "$ref": "#/properties/metadata/additionalProperties" } }
         ]
       }
     }

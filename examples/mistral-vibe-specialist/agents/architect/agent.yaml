@@ -1,0 +1,24 @@
+spec_version: "0.1.0"
+name: architect
+version: 1.0.0
+description: >
+  Responsible for system design, architectural patterns, and structural specifications.
+  Produces high-level blueprints that the implementation team follows.
+
+skills:
+  - code-design
+
+model:
+  preferred: mistral-large-latest
+  constraints:
+    temperature: 0.1
+    max_tokens: 4096
+
+runtime:
+  max_turns: 10
+  timeout: 120
+
+tags:
+  - architecture
+  - design
+  - specification
